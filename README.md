@@ -52,7 +52,7 @@ This pipeline is designed to extract product data from Amazon using **Scrapy**, 
 
 ### 🧠 4. **Cataloging** – *AWS Glue Crawler*
 
-* A scheduled or event-triggered **Glue Crawler** scans the cleaned S3 bucket.
+* A **Glue Crawler** scans the cleaned S3 bucket.
 * It infers the schema from the partitioned structure and updates the **AWS Glue Data Catalog**.
 * This makes the data queryable in **Amazon Athena**.
 
@@ -60,7 +60,6 @@ This pipeline is designed to extract product data from Amazon using **Scrapy**, 
 
 ### 🔍 5. **Querying** – *Amazon Athena*
 
-* Analysts or automated processes can now run SQL queries on the cleaned data.
 * Example query:
 
   ```sql
@@ -84,15 +83,5 @@ This pipeline is designed to extract product data from Amazon using **Scrapy**, 
 | Catalog         | AWS Glue Crawler                     |
 | Query           | Amazon Athena                        |
 
----
 
-### 🚀 Optional Enhancements:
-
-* Add **Glue Jobs (PySpark)** for heavy transformations
-* Trigger pipeline via **EventBridge** or **Step Functions**
-* Integrate with **QuickSight** for dashboards
-
----
-
-Let me know if you'd like a diagram or sample code to support this pipeline description.
 
