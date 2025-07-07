@@ -45,6 +45,7 @@ This pipeline is designed to extract product data from Amazon using **Scrapy**, 
   ```
   s3://amazon-data-lake/clean/year=2025/month=07/day=05/cleaned_data.json
   ```
+![s3](https://github.com/user-attachments/assets/bd909a9f-ae39-4e77-b353-49162d4e0358)
 
 ---
 
