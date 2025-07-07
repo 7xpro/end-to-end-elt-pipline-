@@ -1,0 +1,71 @@
+#this lambda get trigger when new file comde in the s3 bucket
+
+import json
+import boto3
+import pandas as pd
+from io import BytesIO
+from datetime import datetime
+
+s3 = boto3.client('s3')
+output_bucket = 'cleaned-data-02'
+partition = datetime.now().strftime("year=%Y/month=%m/day=%d")
+output_key = f'{partition}/mobiles_cleand_data.json'
+
+def lambda_handler(event, context):
+    # Get bucket and object key from event
+    bucket =event['Records'][0]['s3']['bucket']['name']
+    key =event['Records'][0]['s3']['object']['key']
+
+    # Read raw JSON file from S3
+    response = s3.get_object(Bucket=bucket, Key=key)
+    raw_data = response['Body'].read()
+    df = pd.read_json(BytesIO(raw_data), lines=True)
+
+    # Data cleaning
+    df = df.drop_duplicates()
+    df['discount_percent'] = df['discount_percent'].fillna(0)
+    df['discount_percent'] = df['discount_percent'].astype(str).str.replace(r'[- ,%]', '', regex=True).astype(float)
+
+    for col in ['current_price', 'original_price']:
+        df[col] = df[col].fillna(0)
+        df[col] = df[col].astype(str).str.replace('\u20b9', '', regex=False).str.replace(',', '', regex=False).astype(float)
+
+    condition_drop1 = (df['current_price'] == 0) & (df['original_price'] == 0)
+    df = df[~condition_drop1]
+
+    condition_calc = (df['current_price'] == 0) & df['discount_percent'].notnull() & df['original_price'].notnull()
+    df.loc[condition_calc, 'current_price'] = df.loc[condition_calc, 'original_price'] * (1 - df.loc[condition_calc, 'discount_percent'] / 100)
+
+    condition_fill = (df['current_price'].isnull()) & ((df['discount_percent'] == 0) | df['discount_percent'].isnull()) & df['original_price'].notnull()
+    df.loc[condition_fill, 'current_price'] = df.loc[condition_fill, 'original_price']
+
+    origi_Condition = (df['original_price'] == 0) & df['current_price'].notnull() & df['discount_percent'].notnull()
+    df.loc[origi_Condition, 'original_price'] = df.loc[origi_Condition, "current_price"] / ((1 - df.loc[origi_Condition, "discount_percent"]) / 100)
+
+    discount_condition = (df['discount_percent'] == 0) & df['original_price'].notnull() & df['current_price'].notnull()
+    df.loc[discount_condition, 'discount_percent'] = ((df.loc[discount_condition, 'original_price'] - df.loc[discount_condition, 'current_price']) / df.loc[discount_condition, 'original_price']) * 100
+
+    df = df[df['name'].notna() & (df['name'].str.strip() != '')]
+    df['name'] = df['name'].astype(str)
+    df['brand'] = df['brand'].astype(str)
+
+    brand_list = ['apple', 'oneplus', 'realme', 'redmi', 'nokia', 'vivo', 'xiaomi', 'samsung', 'sumsung']
+    for brand_name in brand_list:
+        df.loc[df['name'].str.lower().str.contains(brand_name), 'brand'] = brand_name.title()
+
+    df['rating'] = df['rating'].astype("str").str.replace(r'[ratings ,]', '', regex=True)
+    df['rating'] = pd.to_numeric(df['rating'], errors='coerce')
+    df['rating'] = df['rating'].fillna(df['rating'].mean())
+
+    df.loc[df['category'].isnull() & df['name'].str.lower().str.contains('iphone|samsung|redmi|mobile|vivo|oneplus|nokia'), 'category'] = 'Mobiles'
+    df['category'] = df['category'].fillna('unknown')
+
+    # Convert DataFrame to bytes and upload to S3
+    output_buffer = BytesIO()
+    df.to_json(output_buffer, orient='records', lines=True)
+    s3.put_object(Bucket=output_bucket, Key=output_key, Body=output_buffer.getvalue())
+
+    return {
+        'statusCode': 200,
+        'body': json.dumps(f"Cleaned data uploaded to s3://{output_bucket}/{output_key}")
+    }
