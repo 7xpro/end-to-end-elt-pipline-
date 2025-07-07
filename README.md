@@ -22,8 +22,13 @@ This pipeline is designed to extract product data from Amazon using **Scrapy**, 
 ---
 
 ### 🔧 2. **Loading Raw Data (L)** – *S3 Storage*
+![s3](https://github.com/user-attachments/assets/bd909a9f-ae39-4e77-b353-49162d4e0358)
+
+https://github.com/user-attachments/assets/38578e51-5d77-41e1-b8e9-ff2ec61c80b1
 
 * Scraped files are organized and uploaded to:
+
+
 
   ```
   s3://amazon-data-lake/raw/YYYY-MM-DD/amazon_raw.json
@@ -33,6 +38,10 @@ This pipeline is designed to extract product data from Amazon using **Scrapy**, 
 ---
 
 ### 🔄 3. **Transformation (T)** – *AWS Lambda Function*
+
+
+https://github.com/user-attachments/assets/b1df6ad0-4d0b-4549-9724-3569832e3e2c
+
 
 * An **AWS Lambda** function is triggered upon object creation in the raw bucket.
 * It performs cleaning and normalization tasks such as:
@@ -45,11 +54,12 @@ This pipeline is designed to extract product data from Amazon using **Scrapy**, 
   ```
   s3://amazon-data-lake/clean/year=2025/month=07/day=05/cleaned_data.json
   ```
-![s3](https://github.com/user-attachments/assets/bd909a9f-ae39-4e77-b353-49162d4e0358)
+
 
 ---
 
 ### 🧠 4. **Cataloging** – *AWS Glue Crawler*
+![glue crawler](https://github.com/user-attachments/assets/9728a26c-2086-4a26-99a2-2919debec4c9)
 
 * A **Glue Crawler** scans the cleaned S3 bucket.
 * It infers the schema from the partitioned structure and updates the **AWS Glue Data Catalog**.
@@ -58,6 +68,10 @@ This pipeline is designed to extract product data from Amazon using **Scrapy**, 
 ---
 
 ### 🔍 5. **Querying** – *Amazon Athena*
+
+
+https://github.com/user-attachments/assets/7a3041fa-ec6c-49ea-b0fd-138ee5a35f66
+
 
 * Example query:
 
