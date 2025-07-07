@@ -1,7 +1,5 @@
-end-to-end-elt-pipline-
-Here’s a clear and professional description of your ELT data pipeline — suitable for your documentation, interviews, or portfolio:
+#end-to-end-elt-pipline-
 
----
 
 ## ✅ **ELT Data Pipeline Description**
 
